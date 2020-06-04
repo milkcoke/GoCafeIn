@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">GoCafein</string>
+
+    <string name="title_activity_end">EndActivity</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+
+    <string name="client_id">C2nhanNzO1ieOfs5K3jB</string>
+    <string name="client_secret">W4ImEbUUR6</string>
+    <string name="client_name">GoCafein</string>
+</resources>

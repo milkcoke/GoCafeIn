@@ -35,11 +35,18 @@
 
 <!--    (Naver)Mapfragment or MapView: 기본 View만 가짐.-->
 <!--    지도를 다루는 Interface 요소는 NaverMap Class가 담당-->
+
+
+<!--    현재 위치 표시버튼 활성화화 locatinButtonEnabled true-->
+<!--    나침반은 false (비활성화)-->
     <fragment
+        xmlns:app="http://schemas.android.com/apk/res-auto"
         android:id="@+id/naver_map_fragment"
         android:layout_width="match_parent"
         android:name="com.naver.maps.map.MapFragment"
         android:layout_height="400dp"
+        app:navermap_locationButtonEnabled="true"
+        app:navermap_compassEnabled="false"
         android:layout_marginTop="150dp" />
 
 

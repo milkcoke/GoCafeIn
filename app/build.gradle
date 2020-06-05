@@ -38,6 +38,10 @@ dependencies {
 
 //    naver map SDK latest version : 3.8.0
     implementation("com.naver.maps:map-sdk:3.8.0")
+//    Google Play Service : FusedLocationProviderClient, FusedLcationSource 적용
+//    현재 위치의 정확한 파악을 위한 서비스
+    implementation("com.google.android.gms:play-services-location:16.0.0")
+
 
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     testImplementation 'junit:junit:4.12'

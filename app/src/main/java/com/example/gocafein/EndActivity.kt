@@ -3,25 +3,36 @@ package com.example.gocafein
 import android.os.Bundle
 import android.os.Handler
 import android.view.View
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.naver.maps.map.LocationSource
-import com.naver.maps.map.MapFragment
-import com.naver.maps.map.NaverMap
-import com.naver.maps.map.OnMapReadyCallback
+import com.naver.maps.map.*
+import com.naver.maps.map.util.FusedLocationSource
 import kotlinx.android.synthetic.main.activity_end.*
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
  * status bar and navigation/system bar) with user interaction.
  */
+
+private const val LOCATION_PERMISSION_REQUEST_CODE = 1000
+
 class EndActivity : AppCompatActivity(), OnMapReadyCallback {
 //    지도 Interface를 다루는 naverMap Class
 
 
+    private lateinit var locationSource : FusedLocationSource
 //    NaverMap 생성시 바로 호출되는 콜백 메소드
 //    지도 Option Handling하는데 사용
     override fun onMapReady(naverMap: NaverMap) {
+//    locationOverlay: 현재 위치를 나타내는 Overlay
         val locationOverlay = naverMap.locationOverlay
+        val uiSettings = naverMap.uiSettings
+        naverMap.locationSource = locationSource
+        naverMap.addOnLocationChangeListener { location ->
+            Toast.makeText(this, "${location.latitude}, ${location.longitude}", Toast.LENGTH_SHORT).show()
+        }
+
+
 //    지도 객체에 종속된 객체로, 지도에 단 하나만 존재함.
 //    보여주고 숨기는 것은 오로지 isVisible 로만 가능.
         locationOverlay.isVisible = true
@@ -35,7 +46,7 @@ class EndActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         })
 //    현재 위치 추적모드 ON
-//        naverMap.locationTrackingMode = LocationTrackingMode.Follow
+        naverMap.locationTrackingMode = LocationTrackingMode.Follow
     }
 
     private val mHideHandler = Handler()
@@ -77,7 +88,9 @@ class EndActivity : AppCompatActivity(), OnMapReadyCallback {
 
         mVisible = true
         userInfoInit()
+
         mapInit()
+
         // Set up the user interaction to manually show or hide the system UI.
         user_name_text.setOnClickListener { toggle() }
         user_email_text.setOnClickListener { toggle() }
@@ -169,5 +182,29 @@ class EndActivity : AppCompatActivity(), OnMapReadyCallback {
             supportFragmentManager.beginTransaction().add(R.id.naver_map_fragment, mapFragment).commit()
         }
         mapFragment.getMapAsync(this)
+
+
+        //    Permission 처리를 위해 별도 프래그먼트 권한 요청 생성
+        locationSource = FusedLocationSource(mapFragment, LOCATION_PERMISSION_REQUEST_CODE)
+
+
+
     }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        if (locationSource.onRequestPermissionsResult(requestCode, permissions, grantResults)) {
+            //        권한이 거부될 경우 return
+            if (!locationSource.isActivated) Toast.makeText(this, "거부됨", Toast.LENGTH_SHORT).show()
+            else Toast.makeText(this, "조아요!", Toast.LENGTH_SHORT).show()
+            return
+        }
+        Toast.makeText(this, "조아요!", Toast.LENGTH_SHORT).show()
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+    }
+
+
 }

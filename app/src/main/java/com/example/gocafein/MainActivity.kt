@@ -37,9 +37,9 @@ class MainActivity : AppCompatActivity() {
         //        Mobile web의 로그인 화셤ㄴ시 서버에 저장된 앱의 이름이 표시됨.
         mOAuthLoginModule.init(
                 this
-                ,getString(R.string.client_id)
-                ,getString(R.string.client_secret)
-                ,getString(R.string.client_name)
+                ,getString(R.string.login_api_client_id)
+                ,getString(R.string.login_api_client_secret)
+                ,getString(R.string.login_api_client_name)
         )
 
 
@@ -64,6 +64,7 @@ class MainActivity : AppCompatActivity() {
                 Log.i("userInfo", "이름 : $userName \n이메일: $userEmail")
                 userIntent.putExtra("userName", userName)
                 userIntent.putExtra("userEmail", userEmail)
+                startActivity(userIntent)
             }
 
         }
@@ -71,7 +72,6 @@ class MainActivity : AppCompatActivity() {
         fun successLogin() {
             naver_logout_button.visibility = View.VISIBLE
             RequestApiTask().execute()
-            startActivity(userIntent)
         }
 
         val mOAuthLoginHandler: OAuthLoginHandler = object : OAuthLoginHandler() {
@@ -82,10 +82,10 @@ class MainActivity : AppCompatActivity() {
                     val refreshToken = mOAuthLoginModule.getRefreshToken(this@MainActivity)
                     val expiresAt = mOAuthLoginModule.getExpiresAt(this@MainActivity)
                     val tokenType = mOAuthLoginModule.getTokenType(this@MainActivity)
-                    Log.i("Token", "nhn Login Access Token : $accessToken")
-                    Log.i("Token", "nhn Login refresh Token : $refreshToken")
-                    Log.i("Token", "nhn Login expiresAt : $expiresAt")
-                    Log.i("Token", "nhn Login Token Type : $tokenType")
+                    Log.i("Token", "Login Access Token : $accessToken")
+                    Log.i("Token", "Login refresh Token : $refreshToken")
+                    Log.i("Token", "Login expiresAt : $expiresAt")
+                    Log.i("Token", "Login Token Type : $tokenType")
                     successLogin()
                 } else {
                     val errorCode = mOAuthLoginModule.getLastErrorCode(this@MainActivity).code

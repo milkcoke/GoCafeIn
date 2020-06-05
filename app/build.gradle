@@ -36,6 +36,9 @@ dependencies {
 //     Android 리소스 및 manifest 파일이 포함될 수 있습니다.
     implementation files('libs/naveridlogin_android_sdk_4.2.6.aar')
 
+//    naver map SDK latest version : 3.8.0
+    implementation("com.naver.maps:map-sdk:3.8.0")
+
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'

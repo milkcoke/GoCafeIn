@@ -4,13 +4,40 @@ import android.os.Bundle
 import android.os.Handler
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import com.naver.maps.map.LocationSource
+import com.naver.maps.map.MapFragment
+import com.naver.maps.map.NaverMap
+import com.naver.maps.map.OnMapReadyCallback
 import kotlinx.android.synthetic.main.activity_end.*
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
  * status bar and navigation/system bar) with user interaction.
  */
-class EndActivity : AppCompatActivity() {
+class EndActivity : AppCompatActivity(), OnMapReadyCallback {
+//    지도 Interface를 다루는 naverMap Class
+
+
+//    NaverMap 생성시 바로 호출되는 콜백 메소드
+//    지도 Option Handling하는데 사용
+    override fun onMapReady(naverMap: NaverMap) {
+        val locationOverlay = naverMap.locationOverlay
+//    지도 객체에 종속된 객체로, 지도에 단 하나만 존재함.
+//    보여주고 숨기는 것은 오로지 isVisible 로만 가능.
+        locationOverlay.isVisible = true
+        naverMap.setLocationSource(object : LocationSource {
+//            LocationSource의 메소드는
+//            NaverMap 객체가 알아서 호출하므로 개발자의 수동호출을 금함.
+            override fun deactivate() {
+            }
+
+            override fun activate(p0: LocationSource.OnLocationChangedListener) {
+            }
+        })
+//    현재 위치 추적모드 ON
+//        naverMap.locationTrackingMode = LocationTrackingMode.Follow
+    }
+
     private val mHideHandler = Handler()
     private val mHidePart2Runnable = Runnable {
         // Delayed removal of status and navigation bar
@@ -50,6 +77,7 @@ class EndActivity : AppCompatActivity() {
 
         mVisible = true
         userInfoInit()
+        mapInit()
         // Set up the user interaction to manually show or hide the system UI.
         user_name_text.setOnClickListener { toggle() }
         user_email_text.setOnClickListener { toggle() }
@@ -134,4 +162,12 @@ class EndActivity : AppCompatActivity() {
         user_email_text.text = intent.getStringExtra("userEmail")
     }
 
+    fun mapInit() {
+        val mapFragment = supportFragmentManager.findFragmentById(R.id.naver_map_fragment) as MapFragment
+        if (mapFragment == null) {
+            val mapFragment = MapFragment.newInstance()
+            supportFragmentManager.beginTransaction().add(R.id.naver_map_fragment, mapFragment).commit()
+        }
+        mapFragment.getMapAsync(this)
+    }
 }

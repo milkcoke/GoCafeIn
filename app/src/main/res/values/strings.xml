@@ -5,9 +5,15 @@
     <string name="dummy_button">Dummy Button</string>
     <string name="dummy_content">DUMMY\nCONTENT</string>
 
-    <string name="client_id">C2nhanNzO1ieOfs5K3jB</string>
-    <string name="client_secret">W4ImEbUUR6</string>
-    <string name="client_name">GoCafein</string>
+<!--    Naver Login API account Information-->
+    <string name="login_api_client_id">C2nhanNzO1ieOfs5K3jB</string>
+    <string name="login_api_client_secret">W4ImEbUUR6</string>
+    <string name="login_api_client_name">GoCafein</string>
+
+
+<!--    Naver Cloud Platform (Naver Map) account Information-->
+    <string name="map_api_client_id">5f0p60lwsd</string>
+
 
     <string name="title_activity_fullscreen">FullscreenActivity</string>
 </resources>

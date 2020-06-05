@@ -8,4 +8,6 @@
     <string name="client_id">C2nhanNzO1ieOfs5K3jB</string>
     <string name="client_secret">W4ImEbUUR6</string>
     <string name="client_name">GoCafein</string>
+
+    <string name="title_activity_fullscreen">FullscreenActivity</string>
 </resources>

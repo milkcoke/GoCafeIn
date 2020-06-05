@@ -31,7 +31,7 @@ class EndActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Con
 
     private lateinit var locationSource : FusedLocationSource
 
-//    Not yet: 실시간 Update
+//    Not yet: 실시간 위치 업데이트
     var currentLatitude : Double = 37.540839
     var currentLongtitude : Double = 127.079311
 
@@ -76,9 +76,7 @@ class EndActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Con
 
 
 
-
-
-
+// Full Screen 지원을 위한 쓰레드
     private val mHideHandler = Handler()
     private val mHidePart2Runnable = Runnable {
         // Delayed removal of status and navigation bar

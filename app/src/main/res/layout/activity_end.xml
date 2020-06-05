@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#0099cc"
+    android:background="@color/colorPrimary"
     tools:context=".EndActivity">
 
     <!-- The primary full-screen view. This can be replaced with whatever view
@@ -15,10 +15,10 @@
         android:layout_height="wrap_content"
         android:keepScreenOn="true"
         android:text="null"
-        android:layout_marginTop="30dp"
+        android:layout_marginTop="50dp"
         android:layout_gravity="top|center_horizontal"
-        android:textColor="@color/colorPrimary"
-        android:textSize="30sp"
+        android:textColor="@color/colorPrimaryDark"
+        android:textSize="25sp"
         android:textStyle="bold" />
 
     <TextView
@@ -30,7 +30,7 @@
         android:layout_marginTop="100dp"
         android:text="null"
         android:textColor="@color/colorPrimaryDark"
-        android:textSize="30sp"
+        android:textSize="25sp"
         android:textStyle="bold" />
 
 <!--    (Naver)Mapfragment or MapView: 기본 View만 가짐.-->

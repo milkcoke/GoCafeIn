@@ -45,7 +45,6 @@
         android:layout_width="match_parent"
         android:name="com.naver.maps.map.MapFragment"
         android:layout_height="400dp"
-        app:navermap_locationButtonEnabled="true"
         app:navermap_compassEnabled="false"
         android:layout_marginTop="150dp" />
 

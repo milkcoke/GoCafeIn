@@ -143,6 +143,7 @@ class EndActivity : AppCompatActivity(), OnMapReadyCallback {
         user_name_text.setOnClickListener { toggle() }
         user_email_text.setOnClickListener { toggle() }
 
+//        https://docs.ncloud.com/ko/naveropenapi_v3/maps/url-scheme/url-scheme.html
 //        URL Scheme 처리 (버튼 텍스트로 네이버지도 자동검색)
         search_button.setOnClickListener {
 

@@ -21,8 +21,7 @@ import org.json.JSONObject
 
 class LoginActivity : AppCompatActivity(), LocationPermissionDialogActivity.NoticeDialogListener {
 
-    val REQUEST_CODE_FINE_LOCATION = 3000
-    val REQUEST_CODE_COARSE_LOCATION = 4000
+    val REQUEST_CODE_LOCATION = 3000
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,7 +34,7 @@ class LoginActivity : AppCompatActivity(), LocationPermissionDialogActivity.Noti
     //     권한 요청을 수행함
     override fun onDialogConfirmButtonClick() {
         ActivityCompat.requestPermissions(this@LoginActivity,
-            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), REQUEST_CODE_FINE_LOCATION)
+            arrayOf(ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),REQUEST_CODE_LOCATION)
     }
 
     private fun init() {
@@ -168,7 +167,7 @@ class LoginActivity : AppCompatActivity(), LocationPermissionDialogActivity.Noti
             } else {
 //                    설명이 필요하지 않을경우 (앱 최초실행, 거절이력 X) 권한 요청 다이얼로그 띄우기
                 ActivityCompat.requestPermissions(this@LoginActivity,
-                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), REQUEST_CODE_FINE_LOCATION)
+                    arrayOf(ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION), REQUEST_CODE_LOCATION)
 //                콜백 메소드가 여기서 요청에대한 결과값을 반환함.
             }
         } else {
@@ -186,7 +185,7 @@ class LoginActivity : AppCompatActivity(), LocationPermissionDialogActivity.Noti
         grantResults: IntArray
     ) {
         when (requestCode) {
-            REQUEST_CODE_FINE_LOCATION -> {
+            REQUEST_CODE_LOCATION -> {
 //                요청이 취소되면 결과는 empty 값을 가짐
 //                요청이 취소되지 않고 승인결과를 얻는다면 (권한 허용)
                 if((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {

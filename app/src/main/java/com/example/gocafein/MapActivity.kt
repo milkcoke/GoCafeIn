@@ -1,11 +1,15 @@
 package com.example.gocafein
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.os.Handler
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.gms.location.*
+import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.*
+import com.naver.maps.map.overlay.Marker
 import com.naver.maps.map.util.FusedLocationSource
 import kotlinx.android.synthetic.main.activity_end.*
 
@@ -20,13 +24,49 @@ class EndActivity : AppCompatActivity(), OnMapReadyCallback {
 //    지도 Interface를 다루는 naverMap Class
 
 
+
     private lateinit var locationSource : FusedLocationSource
+    lateinit var fusedLocationClient : FusedLocationProviderClient
+    lateinit var currentLocation : LatLng
+    lateinit var locationRequest : LocationRequest
+    lateinit var locationCallBack : LocationCallback
 //    NaverMap 생성시 바로 호출되는 콜백 메소드
 //    지도 Option Handling하는데 사용
+
+//    이미 초기화면에서 위치권한 받았다고 가정.
+    @SuppressLint("MissingPermission")
+    private fun getUserLocation() {
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        fusedLocationClient?.lastLocation?.addOnSuccessListener {
+            currentLocation = LatLng(it.latitude, it.longitude)
+        }
+    }
+    fun startLocationUpdate() {
+        locationRequest = LocationRequest.create().apply {
+            interval = 10000
+            fastestInterval = 5000
+            priority = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY
+        }
+        locationCallBack = object : LocationCallback() {
+            override fun onLocationResult(locationResult: LocationResult?) {
+//                null 이면 그냥 return
+                locationResult ?: return
+                for(updatedLocation in locationResult.locations) {
+                    currentLocation = LatLng(updatedLocation.latitude, updatedLocation.longitude)
+                }
+            }
+        }
+    }
+
     override fun onMapReady(naverMap: NaverMap) {
 //    locationOverlay: 현재 위치를 나타내는 Overlay
         val locationOverlay = naverMap.locationOverlay
         val uiSettings = naverMap.uiSettings
+        val marker = Marker()
+        val cameraUpdate = CameraUpdate.scrollTo(currentLocation)
+        marker.position = currentLocation
+        marker.map = naverMap
+
         naverMap.locationSource = locationSource
         naverMap.addOnLocationChangeListener { location ->
             Toast.makeText(this, "${location.latitude}, ${location.longitude}", Toast.LENGTH_SHORT).show()
@@ -36,6 +76,7 @@ class EndActivity : AppCompatActivity(), OnMapReadyCallback {
 //    지도 객체에 종속된 객체로, 지도에 단 하나만 존재함.
 //    보여주고 숨기는 것은 오로지 isVisible 로만 가능.
         locationOverlay.isVisible = true
+        locationOverlay.position = currentLocation
         naverMap.setLocationSource(object : LocationSource {
 //            LocationSource의 메소드는
 //            NaverMap 객체가 알아서 호출하므로 개발자의 수동호출을 금함.
@@ -47,6 +88,8 @@ class EndActivity : AppCompatActivity(), OnMapReadyCallback {
         })
 //    현재 위치 추적모드 ON
         naverMap.locationTrackingMode = LocationTrackingMode.Follow
+//        아..현자 씨게오네 아 ㄹㅇ루다가 ㅋㅋㅋㅋㅋㅋㅋ
+        naverMap.moveCamera(cameraUpdate)
     }
 
     private val mHideHandler = Handler()
@@ -88,7 +131,8 @@ class EndActivity : AppCompatActivity(), OnMapReadyCallback {
 
         mVisible = true
         userInfoInit()
-
+        startLocationUpdate()
+        getUserLocation()
         mapInit()
 
         // Set up the user interaction to manually show or hide the system UI.
@@ -170,12 +214,12 @@ class EndActivity : AppCompatActivity(), OnMapReadyCallback {
         private val UI_ANIMATION_DELAY = 300
     }
 
-    fun userInfoInit() {
+    private fun userInfoInit() {
         user_name_text.text = intent.getStringExtra("userName")
         user_email_text.text = intent.getStringExtra("userEmail")
     }
 
-    fun mapInit() {
+    private fun mapInit() {
         val mapFragment = supportFragmentManager.findFragmentById(R.id.naver_map_fragment) as MapFragment
         if (mapFragment == null) {
             val mapFragment = MapFragment.newInstance()
@@ -185,7 +229,7 @@ class EndActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
         //    Permission 처리를 위해 별도 프래그먼트 권한 요청 생성
-        locationSource = FusedLocationSource(mapFragment, LOCATION_PERMISSION_REQUEST_CODE)
+        locationSource = FusedLocationSource(this, LOCATION_PERMISSION_REQUEST_CODE)
 
 
 
@@ -202,7 +246,6 @@ class EndActivity : AppCompatActivity(), OnMapReadyCallback {
             else Toast.makeText(this, "조아요!", Toast.LENGTH_SHORT).show()
             return
         }
-        Toast.makeText(this, "조아요!", Toast.LENGTH_SHORT).show()
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 

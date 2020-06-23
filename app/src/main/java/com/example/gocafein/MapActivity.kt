@@ -1,6 +1,9 @@
 package com.example.gocafein
 
 import android.annotation.SuppressLint
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.view.View
@@ -12,6 +15,7 @@ import com.naver.maps.map.*
 import com.naver.maps.map.overlay.Marker
 import com.naver.maps.map.util.FusedLocationSource
 import kotlinx.android.synthetic.main.activity_end.*
+
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -139,6 +143,29 @@ class EndActivity : AppCompatActivity(), OnMapReadyCallback {
         user_name_text.setOnClickListener { toggle() }
         user_email_text.setOnClickListener { toggle() }
 
+//        URL Scheme 처리 (버튼 텍스트로 네이버지도 자동검색)
+        search_button.setOnClickListener {
+
+            val buttonText = search_button.text.toString()
+            val url = "nmap://search?query=$buttonText&appname=com.example.gocafein"
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            intent.addCategory(Intent.CATEGORY_BROWSABLE)
+
+            val list =
+                packageManager.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY)
+//            지도 Application이 아무것도 없을 경우  Playstore로 이동.
+            if (list == null || list.isEmpty()) {
+//                Context 무엇으로 할지?
+                startActivity(
+                    Intent(
+                        Intent.ACTION_VIEW,
+                        Uri.parse("market://details?id=com.nhn.android.nmap")
+                    )
+                )
+            } else {
+                startActivity(intent)
+            }
+        }
         // Upon interacting with UI controls, delay any scheduled hide()
         // operations to prevent the jarring behavior of controls going away
         // while interacting with the UI.

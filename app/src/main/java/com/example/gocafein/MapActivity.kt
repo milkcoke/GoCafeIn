@@ -6,99 +6,97 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.AsyncTask
 import android.os.Bundle
+import android.os.Looper
 import android.util.Log
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.location.*
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.*
+import com.naver.maps.map.overlay.LocationOverlay
 import com.naver.maps.map.overlay.Marker
+import com.naver.maps.map.overlay.Overlay
 import com.naver.maps.map.util.FusedLocationSource
 import kotlinx.android.synthetic.main.activity_end.*
-import java.io.BufferedReader
-import java.io.InputStreamReader
+import org.json.JSONException
+import org.json.JSONObject
+import java.io.*
+import java.lang.ref.WeakReference
+import java.net.HttpURLConnection
 import java.net.URL
 
 
 private const val LOCATION_PERMISSION_REQUEST_CODE = 1000
 
-class EndActivity : AppCompatActivity(), OnMapReadyCallback {
+
+class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 //    지도 Interface를 다루는 naverMap Class
 
-
-
     private lateinit var locationSource : FusedLocationSource
+    lateinit var currentNaverMap : NaverMap
     lateinit var fusedLocationClient : FusedLocationProviderClient
     lateinit var currentLocation : LatLng
     lateinit var locationRequest : LocationRequest
     lateinit var locationCallBack : LocationCallback
-
-
+    lateinit var currentMarker : Marker
+    lateinit var locationOverlay : Overlay
 //    도로명 주소
     lateinit var locationText : String
-//    NaverMap 생성시 바로 호출되는 콜백 메소드
-//    지도 Option Handling하는데 사용
 
-//    이미 초기화면에서 위치권한 받았다고 가정.
-    @SuppressLint("MissingPermission")
-    private fun getUserLocation() {
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-        fusedLocationClient?.lastLocation?.addOnSuccessListener {
-            currentLocation = LatLng(it.latitude, it.longitude)
+
+
+    //JSON Parsing Web Data 다시 해야겠다 + AsyncTask
+    //        RunAPI Task ,./
+
+    // Offline API 요청은 Network 를 사용하기 때문에 AsyncTask 사용.
+    private inner class RequestReverseGeocodingTask(context: MapActivity) : AsyncTask<URL?, Unit, String>() {
+//        Background memory 누수를 막기위해 (Garbage Collector 대상 Reference 유지를 위한 레퍼런스)
+        val activityReference = WeakReference(context)
+
+        override fun onPreExecute() {
+
         }
-    }
-    fun startLocationUpdate() {
-        locationRequest = LocationRequest.create().apply {
-            interval = 10000
-            fastestInterval = 5000
-            priority = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY
-        }
-        locationCallBack = object : LocationCallback() {
-            override fun onLocationResult(locationResult: LocationResult?) {
-//                null 이면 그냥 return
-                locationResult ?: return
-                for(updatedLocation in locationResult.locations) {
-                    currentLocation = LatLng(updatedLocation.latitude, updatedLocation.longitude)
+        //            This step is used to perform background computation that can take a long time.
+        override fun doInBackground(vararg params: URL?): String? {
+            var result = ""
+            val inputStream : InputStream
+            var bufferedInputStream : BufferedInputStream? = null
+            var bufferedReader : BufferedReader
+            val httpUrlConnection = params[0]!!.openConnection() as HttpURLConnection
+            httpUrlConnection.requestMethod = "GET"
+            httpUrlConnection.setRequestProperty("X-NCP-APIGW-API-KEY-ID", getString(R.string.naver_platform_api_client_id))
+            httpUrlConnection.setRequestProperty("X-NCP-APIGW-API-KEY", getString(R.string.naver_platform_api_client_secret))
+            try {
+                 inputStream = BufferedInputStream(httpUrlConnection.inputStream)
+                bufferedInputStream = BufferedInputStream(inputStream)
+                bufferedReader = BufferedReader(InputStreamReader(bufferedInputStream))
+                bufferedReader.forEachLine {
+                    result += it
                 }
+            } catch (ioe: IOException) {
+                ioe.printStackTrace()
+            } finally {
+                bufferedInputStream?.close()
             }
-        }
-    }
 
-    override fun onMapReady(naverMap: NaverMap) {
-//    locationOverlay: 현재 위치를 나타내는 Overlay
-        val locationOverlay = naverMap.locationOverlay
-        val uiSettings = naverMap.uiSettings
-        val marker = Marker()
-        val cameraUpdate = CameraUpdate.scrollTo(currentLocation)
-        marker.position = currentLocation
-        marker.map = naverMap
-
-        naverMap.locationSource = locationSource
-        naverMap.addOnLocationChangeListener { location ->
-            Toast.makeText(this, "${location.latitude}, ${location.longitude}", Toast.LENGTH_SHORT).show()
+            return result
         }
 
+        //            invoked on the UI thread after the background computation finishes.
+        override fun onPostExecute(content: String) {
 
-//    지도 객체에 종속된 객체로, 지도에 단 하나만 존재함.
-//    보여주고 숨기는 것은 오로지 isVisible 로만 가능.
-        locationOverlay.isVisible = true
-        locationOverlay.position = currentLocation
-        naverMap.setLocationSource(object : LocationSource {
-//            LocationSource의 메소드는
-//            NaverMap 객체가 알아서 호출하므로 개발자의 수동호출을 금함.
-            override fun deactivate() {
-            }
-
-            override fun activate(p0: LocationSource.OnLocationChangedListener) {
-            }
-        })
-//    현재 위치 추적모드 ON
-        naverMap.locationTrackingMode = LocationTrackingMode.Follow
-//        아..현자 씨게오네 아 ㄹㅇ루다가 ㅋㅋㅋㅋㅋㅋㅋ
-        naverMap.moveCamera(cameraUpdate)
+//                val resultUserInfoJSON = JSONObject(content).getJSONObject("response")
+//                val userEmail = resultUserInfoJSON.getString("email")
+//                val userName = resultUserInfoJSON.getString("name")
+            val activity = activityReference.get()
+            val textAddress = parsingJSON(content)
+            activity?.current_address_textView?.text = textAddress
+            Log.i("address", textAddress)
+//                startActivity(userIntent)
+        }
 
     }
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -106,55 +104,34 @@ class EndActivity : AppCompatActivity(), OnMapReadyCallback {
         setContentView(R.layout.activity_end)
 
         userInfoInit()
-        startLocationUpdate()
-        getUserLocation()
         mapInit()
-
         // Set up the user interaction to manually show or hide the system UI.
         user_name_text.setOnClickListener {
 
         }
 
-//JSON Parsing Web Data 다시 해야겠다 + AsyncTask
-//        RunAPI Task ,./
 
-        // Offline API 요청은 Network 를 사용하기 때문에 AsyncTask 사용.
-        class RequestApiTask : AsyncTask<URL?, Unit, String>() {
-            override fun onPreExecute() {
-            }
-            override fun doInBackground(vararg params: URL?): String? {
-                var result = ""
-                val stream = params[0]?.openStream()
-                val read = BufferedReader(InputStreamReader(stream, "UTF-8"))
-                result = read.readLine()
-                return result
-            }
-            override fun onPostExecute(content: String) {
-//                val resultUserInfoJSON = JSONObject(content).getJSONObject("response")
-//                val userEmail = resultUserInfoJSON.getString("email")
-//                val userName = resultUserInfoJSON.getString("name")
-                current_address_textView.text = content
-                Log.i("address", content)
-//                startActivity(userIntent)
-            }
 
-        }
 
 
         current_address_textView.setOnClickListener {
 //            coords= 입력 좌표 (위도, 경도)
 //            sourcecrs : 입력 좌표계 코드 (default: 위경도 좌표계(epsg:4326) == Google 좌표계)
-            val urlString = "https://naveropenapi.apigw.ntruss.com/map-reversegeocode/v2/gc?coords=${currentLocation.latitude},${currentLocation.longitude}" +
+//          val urlString = "https://naveropenapi.apigw.ntruss.com/map-reversegeocode/v2/gc?request=coordsToaddr&coords=${currentLocation.latitude},${currentLocation.longitude}" +
+//            Naver Reverse GeoCoding 서비스의 치명적 약점은 위경도가 살짝만 달라져도 , 행정구역 지도 검색이 되지 않는다.
+
+//            longitude, latitude 순서에 유의.. 아 이걸로 몇시간을 버린거야..
+            val urlString = "https://naveropenapi.apigw.ntruss.com/map-reversegeocode/v2/gc?request=coordsToaddr&coords=${currentLocation.longitude},${currentLocation.latitude}" +
 //                    orders: 변환 작업 이름,
-//                    legalcode: 좌표 -> 법정동 , admcode : 좌표->행정동, addr: 좌표 -> 지번주소
-                    "&sourcecrs=epsg:4326&" +
-                    "orders=roadaddr" +
+//                    legalcode: 좌표 -> 법정동 , admcode : 좌표->행정동, roadaddr: 좌표 -> 도로명주소 (최신)
+                    "&sourcecrs=epsg:4326" +
+                    "&orders=admcode" +
 //                    output : json or xml
-                    "&output=json" +
-            "X-NCP-APIGW-API-KEY-ID:${getString(R.string.naver_platform_api_client_id)}" +
-            "X-NCP-APIGW-API-KEY:${getString(R.string.naver_platform_api_client_secret)}"
+                    "&output=json"
+
+//            val url = URL(urlString)
             val url = URL(urlString)
-            val task = RequestApiTask()
+            val task = RequestReverseGeocodingTask(this@MapActivity)
             task.execute(url)
         }
 
@@ -184,7 +161,136 @@ class EndActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
 
+
+
+
+
     }
+
+
+
+
+    override fun onStop() {
+        super.onStop()
+        if (fusedLocationClient != null) {
+//
+            fusedLocationClient.removeLocationUpdates(locationCallBack)
+        }
+    }
+
+    //    이미 초기화면에서 위치권한 받았다고 가정.
+    @SuppressLint("MissingPermission")
+    private fun getUserLocation() {
+    //            마지막으로 알려진 위치 가져오기
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        fusedLocationClient?.lastLocation?.addOnSuccessListener {
+            currentLocation = LatLng(it.latitude, it.longitude)
+
+// 해당 위치를 마커로 표시
+            currentMarker.position = currentLocation
+            currentMarker.map = currentNaverMap
+
+//            마지막 위치에 오버레이 표시
+            //    지도 객체에 종속된 객체로, 지도에 단 하나만 존재함.
+            //    보여주고 숨기는 것은 오로지 isVisible 로만 가능.
+            locationOverlay.isVisible = true
+            (locationOverlay as LocationOverlay).position = currentLocation
+
+//            마지막 위치로 카메라 이동
+            val cameraUpdate = CameraUpdate.scrollTo(currentLocation)
+            currentNaverMap.moveCamera(cameraUpdate)
+
+        }
+    }
+
+    fun parsingJSON (content: String) : String{
+        var resultAddress = ""
+        try {
+            val json = JSONObject(content)
+            Log.i("json", json.toString())
+            val addressRegion = json.getJSONArray("results").getJSONObject(0).getJSONObject("region")
+            Log.i("jsonAddress", addressRegion.toString())
+            val city = addressRegion.getJSONObject("area1").getString("name")
+            val county = addressRegion.getJSONObject("area2").getString("name")
+            val district = addressRegion.getJSONObject("area3").getString("name")
+            resultAddress = "$city $county $district"
+        } catch (e: JSONException) {
+            e.printStackTrace()
+        }
+
+        return resultAddress
+    }
+
+//    API Level 10 이상에서는 Background Location Update X
+//    allow update location while using this app
+//    실시간 위치 업데이트 구현 (굳이 이앱에서 사용할 일은 없을듯?)
+    @SuppressLint("MissingPermission")
+    private fun startLocationUpdate() {
+        locationRequest = LocationRequest.create().apply {
+            interval = 10000
+            fastestInterval = 5000
+            priority = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY
+        }
+        locationCallBack = object : LocationCallback() {
+            override fun onLocationResult(locationResult: LocationResult?) {
+//                null 이면 그냥 return
+                locationResult ?: return
+                for(updatedLocation in locationResult.locations) {
+                    currentLocation = LatLng(updatedLocation.latitude, updatedLocation.longitude)
+                    Log.i("Location", "update 되는중!")
+//                    Location 위치가 업데이트 될때마다 카메라 이동
+                    val cameraUpdate = CameraUpdate.scrollTo(currentLocation)
+//                    Location 위치 업데이트 할 때마다 마커 재생성
+                    currentNaverMap.moveCamera(cameraUpdate)
+                }
+            }
+        }
+//    권한은 이미 앞서서 허용했다고 가정.
+    fusedLocationClient.requestLocationUpdates(locationRequest, locationCallBack, Looper.myLooper())
+    }
+
+//    NaverMap 생성시 바로 호출되는 콜백 메소드
+//    지도 Option Handling 하는데 사용
+
+    override fun onMapReady(naverMap: NaverMap) {
+//    locationOverlay: 현재 위치를 나타내는 Overlay
+        currentNaverMap = naverMap
+        locationOverlay = naverMap.locationOverlay
+        currentMarker = Marker()
+        val uiSettings = naverMap.uiSettings
+
+//        Map이 준비된 후에 마지막 (최근) 사용자 위치를 받아옴
+        getUserLocation()
+//      그 후에 유저 위치 업데이트 요청 (일단 중단)
+//        startLocationUpdate()
+
+
+        naverMap.locationSource = locationSource
+        naverMap.addOnLocationChangeListener { location ->
+            Toast.makeText(this, "${location.latitude}, ${location.longitude}", Toast.LENGTH_SHORT).show()
+        }
+
+
+
+
+        naverMap.setLocationSource(object : LocationSource {
+//            LocationSource의 메소드는
+//            NaverMap 객체가 알아서 호출하므로 개발자의 수동호출을 금함.
+            override fun deactivate() {
+            }
+
+            override fun activate(p0: LocationSource.OnLocationChangedListener) {
+            }
+        })
+//    현재 위치 추적모드 ON
+        naverMap.locationTrackingMode = LocationTrackingMode.Follow
+//        아..현자 씨게오네 아 ㄹㅇ루다가 ㅋㅋㅋㅋㅋㅋㅋ
+
+
+    }
+
+
+
 
 
     private fun userInfoInit() {

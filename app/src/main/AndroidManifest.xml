@@ -24,7 +24,7 @@
             android:value="@string/naver_platform_api_client_id" />
 
         <activity
-            android:name=".EndActivity"
+            android:name=".MapActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_end"
             android:theme="@style/FullscreenTheme" />

@@ -40,7 +40,7 @@ class LoginActivity : AppCompatActivity(), LocationPermissionDialogActivity.Noti
     private fun init() {
     //        OAuthLogin 객체(Singleton instance)를 얻고
         val mOAuthLoginModule = OAuthLogin.getInstance()
-        val userIntent = Intent(this@LoginActivity, EndActivity::class.java)
+        val userIntent = Intent(this@LoginActivity, MapActivity::class.java)
 
         //        LoginModule init method가 여러번 실행돼도
         //        access, refresh token은 유지됨.

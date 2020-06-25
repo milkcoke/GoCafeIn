@@ -8,7 +8,6 @@ import android.os.AsyncTask
 import android.os.Bundle
 import android.os.Looper
 import android.util.Log
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.gms.location.*
@@ -41,15 +40,52 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
     lateinit var locationCallBack : LocationCallback
     lateinit var currentMarker : Marker
     lateinit var locationOverlay : Overlay
-//    도로명 주소
-    lateinit var locationText : String
+//    도로명 주소중 '동/읍'만 keep해둘 필요가있음.
+    lateinit var currentlocationDistrict : String
 
 
+    private inner class RequestSearchTask(context: MapActivity) : AsyncTask<URL?, Unit, String>() {
+        //        Background memory 누수를 막기위해 (Garbage Collector 대상 Reference 유지를 위한 레퍼런스)
+        val activityReference = WeakReference(context)
 
-    //JSON Parsing Web Data 다시 해야겠다 + AsyncTask
-    //        RunAPI Task ,./
+        override fun onPreExecute() {
 
-    // Offline API 요청은 Network 를 사용하기 때문에 AsyncTask 사용.
+        }
+        //            This step is used to perform background computation that can take a long time.
+        override fun doInBackground(vararg params: URL?): String? {
+            var result = ""
+            val inputStream : InputStream
+            var bufferedInputStream : BufferedInputStream? = null
+            var bufferedReader : BufferedReader
+            val httpUrlConnection = params[0]!!.openConnection() as HttpURLConnection
+            httpUrlConnection.requestMethod = "GET"
+            httpUrlConnection.setRequestProperty("X-Naver-Client-Id", getString(R.string.login_api_client_id))
+            httpUrlConnection.setRequestProperty("X-Naver-Client-Secret", getString(R.string.login_api_client_secret))
+            try {
+                inputStream = BufferedInputStream(httpUrlConnection.inputStream)
+                bufferedInputStream = BufferedInputStream(inputStream)
+                bufferedReader = BufferedReader(InputStreamReader(bufferedInputStream))
+                bufferedReader.forEachLine {
+                    result += it
+                }
+            } catch (ioe: IOException) {
+                ioe.printStackTrace()
+            } finally {
+                bufferedInputStream?.close()
+            }
+
+            return result
+        }
+
+        //            invoked on the UI thread after the background computation finishes.
+        override fun onPostExecute(content: String) {
+
+            val activity = activityReference.get()
+            Log.i("search", content)
+        }
+
+    }
+
     private inner class RequestReverseGeocodingTask(context: MapActivity) : AsyncTask<URL?, Unit, String>() {
 //        Background memory 누수를 막기위해 (Garbage Collector 대상 Reference 유지를 위한 레퍼런스)
         val activityReference = WeakReference(context)
@@ -86,14 +122,10 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         //            invoked on the UI thread after the background computation finishes.
         override fun onPostExecute(content: String) {
 
-//                val resultUserInfoJSON = JSONObject(content).getJSONObject("response")
-//                val userEmail = resultUserInfoJSON.getString("email")
-//                val userName = resultUserInfoJSON.getString("name")
             val activity = activityReference.get()
-            val textAddress = parsingJSON(content)
+            val textAddress = parsingCurrentAddressJSON(content)
             activity?.current_address_textView?.text = textAddress
             Log.i("address", textAddress)
-//                startActivity(userIntent)
         }
 
     }
@@ -112,27 +144,44 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
 
 
+        search_cafe_button.setOnClickListener {
+            val requestUrl = URL("https://openapi.naver.com/v1/search/local.json" +
+//                    query= 검색문자열
+//                    UTF-8 Encoding space character == %20
+                    "?query=$currentlocationDistrict%20카페" +
+//                    display: 검색 결과 출력 건수
+                    "&display=15" +
+//                    start: 검색 시작 위치 (MAX: 1000)
+                    "&start=1" +
+//                    random sort : 유사도순
+                    "&sort=random")
 
+            try {
+                RequestSearchTask(this@MapActivity).execute(requestUrl)
+            } catch (illegalEx : IllegalStateException) {
+                illegalEx.printStackTrace()
+            }
+        }
 
         current_address_textView.setOnClickListener {
-//            coords= 입력 좌표 (위도, 경도)
-//            sourcecrs : 입력 좌표계 코드 (default: 위경도 좌표계(epsg:4326) == Google 좌표계)
-//          val urlString = "https://naveropenapi.apigw.ntruss.com/map-reversegeocode/v2/gc?request=coordsToaddr&coords=${currentLocation.latitude},${currentLocation.longitude}" +
-//            Naver Reverse GeoCoding 서비스의 치명적 약점은 위경도가 살짝만 달라져도 , 행정구역 지도 검색이 되지 않는다.
-
-//            longitude, latitude 순서에 유의.. 아 이걸로 몇시간을 버린거야..
-            val urlString = "https://naveropenapi.apigw.ntruss.com/map-reversegeocode/v2/gc?request=coordsToaddr&coords=${currentLocation.longitude},${currentLocation.latitude}" +
-//                    orders: 변환 작업 이름,
-//                    legalcode: 좌표 -> 법정동 , admcode : 좌표->행정동, roadaddr: 좌표 -> 도로명주소 (최신)
-                    "&sourcecrs=epsg:4326" +
-                    "&orders=admcode" +
-//                    output : json or xml
-                    "&output=json"
-
+////            coords= 입력 좌표 (위도, 경도)
+////            sourcecrs : 입력 좌표계 코드 (default: 위경도 좌표계(epsg:4326) == Google 좌표계)
+////          val urlString = "https://naveropenapi.apigw.ntruss.com/map-reversegeocode/v2/gc?request=coordsToaddr&coords=${currentLocation.latitude},${currentLocation.longitude}" +
+////            Naver Reverse GeoCoding 서비스의 치명적 약점은 위경도가 살짝만 달라져도 , 행정구역 지도 검색이 되지 않는다.
+//
+////            longitude, latitude 순서에 유의.. 아 이걸로 몇시간을 버린거야..
+//            val urlString = "https://naveropenapi.apigw.ntruss.com/map-reversegeocode/v2/gc?request=coordsToaddr&coords=${currentLocation.longitude},${currentLocation.latitude}" +
+////                    orders: 변환 작업 이름,
+////                    legalcode: 좌표 -> 법정동 , admcode : 좌표->행정동, roadaddr: 좌표 -> 도로명주소 (최신)
+//                    "&sourcecrs=epsg:4326" +
+//                    "&orders=admcode" +
+////                    output : json or xml
+//                    "&output=json"
+//
+////            val url = URL(urlString)
 //            val url = URL(urlString)
-            val url = URL(urlString)
-            val task = RequestReverseGeocodingTask(this@MapActivity)
-            task.execute(url)
+//            val task = RequestReverseGeocodingTask(this@MapActivity)
+//            task.execute(url)
         }
 
 //        https://docs.ncloud.com/ko/naveropenapi_v3/maps/url-scheme/url-scheme.html
@@ -200,10 +249,29 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
             val cameraUpdate = CameraUpdate.scrollTo(currentLocation)
             currentNaverMap.moveCamera(cameraUpdate)
 
+            //            coords= 입력 좌표 (위도, 경도)
+//            sourcecrs : 입력 좌표계 코드 (default: 위경도 좌표계(epsg:4326) == Google 좌표계)
+//          val urlString = "https://naveropenapi.apigw.ntruss.com/map-reversegeocode/v2/gc?request=coordsToaddr&coords=${currentLocation.latitude},${currentLocation.longitude}" +
+//            Naver Reverse GeoCoding 서비스의 치명적 약점은 위경도가 살짝만 달라져도 , 행정구역 지도 검색이 되지 않는다.
+
+//            longitude, latitude 순서에 유의.. 아 이걸로 몇시간을 버린거야..
+            val urlString = "https://naveropenapi.apigw.ntruss.com/map-reversegeocode/v2/gc?request=coordsToaddr&coords=${currentLocation.longitude},${currentLocation.latitude}" +
+//                    orders: 변환 작업 이름,
+//                    legalcode: 좌표 -> 법정동 , admcode : 좌표->행정동, roadaddr: 좌표 -> 도로명주소 (최신)
+                    "&sourcecrs=epsg:4326" +
+                    "&orders=admcode" +
+//                    output : json or xml
+                    "&output=json"
+
+//            val url = URL(urlString)
+            val url = URL(urlString)
+            val task = RequestReverseGeocodingTask(this@MapActivity)
+            task.execute(url)
+
         }
     }
 
-    fun parsingJSON (content: String) : String{
+    fun parsingCurrentAddressJSON (content: String) : String{
         var resultAddress = ""
         try {
             val json = JSONObject(content)
@@ -213,12 +281,35 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
             val city = addressRegion.getJSONObject("area1").getString("name")
             val county = addressRegion.getJSONObject("area2").getString("name")
             val district = addressRegion.getJSONObject("area3").getString("name")
+            currentlocationDistrict = district
             resultAddress = "$city $county $district"
         } catch (e: JSONException) {
             e.printStackTrace()
         }
 
         return resultAddress
+    }
+
+    fun parsingNearCafeInfoJSON (content: String) : String {
+        var resultAddress = ""
+        try {
+            val json = JSONObject(content)
+            val cafeListArray = json.getJSONArray("items")
+            var tempMapList =  ArrayList<Map<String, String>>()
+            for (i in 0..cafeListArray.length()) {
+//                var cafeInfo = cafeListArray.getJSONObject(i)
+//                tempMapList.add(Map(cafeInfo.getString("title")))
+        }
+
+//                    title, mapx, mapy 를 추출하자.
+
+//            val city = cafeListArray.getJSONObject("area1").getString("name")
+//            val county = cafeListArray.getJSONObject("area2").getString("name")
+//            val district = cafeListArray.getJSONObject("area3").getString("name")
+
+        } catch (e: IOException) {
+
+        }
     }
 
 //    API Level 10 이상에서는 Background Location Update X
@@ -262,7 +353,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 //        Map이 준비된 후에 마지막 (최근) 사용자 위치를 받아옴
         getUserLocation()
 //      그 후에 유저 위치 업데이트 요청 (일단 중단)
-//        startLocationUpdate()
+        startLocationUpdate()
 
 
         naverMap.locationSource = locationSource

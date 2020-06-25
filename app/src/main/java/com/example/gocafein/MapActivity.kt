@@ -1,64 +1,86 @@
 package com.example.gocafein
 
+import android.annotation.SuppressLint
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
-import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.google.android.gms.common.ConnectionResult
-import com.google.android.gms.common.api.GoogleApiClient
-import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationCallback
-import com.google.android.gms.location.LocationRequest
-import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.*
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.*
+import com.naver.maps.map.overlay.Marker
 import com.naver.maps.map.util.FusedLocationSource
 import kotlinx.android.synthetic.main.activity_end.*
 
 
+/**
+ * An example full-screen activity that shows and hides the system UI (i.e.
+ * status bar and navigation/system bar) with user interaction.
+ */
+
 private const val LOCATION_PERMISSION_REQUEST_CODE = 1000
 
-//Fused Location 을 사용하기위해 위치정보 제공자 인터페이스 상속
-class EndActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks,
-    GoogleApiClient.OnConnectionFailedListener {
+class EndActivity : AppCompatActivity(), OnMapReadyCallback {
 //    지도 Interface를 다루는 naverMap Class
 
-    lateinit var providerClient: FusedLocationProviderClient
-    lateinit var googleApiClient: GoogleApiClient
 
 
     private lateinit var locationSource : FusedLocationSource
-
-//    Not yet: 실시간 위치 업데이트
-    var currentLatitude : Double = 37.540839
-    var currentLongtitude : Double = 127.079311
-
+    lateinit var fusedLocationClient : FusedLocationProviderClient
+    lateinit var currentLocation : LatLng
+    lateinit var locationRequest : LocationRequest
+    lateinit var locationCallBack : LocationCallback
 //    NaverMap 생성시 바로 호출되는 콜백 메소드
 //    지도 Option Handling하는데 사용
+
+//    이미 초기화면에서 위치권한 받았다고 가정.
+    @SuppressLint("MissingPermission")
+    private fun getUserLocation() {
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        fusedLocationClient?.lastLocation?.addOnSuccessListener {
+            currentLocation = LatLng(it.latitude, it.longitude)
+        }
+    }
+    fun startLocationUpdate() {
+        locationRequest = LocationRequest.create().apply {
+            interval = 10000
+            fastestInterval = 5000
+            priority = LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY
+        }
+        locationCallBack = object : LocationCallback() {
+            override fun onLocationResult(locationResult: LocationResult?) {
+//                null 이면 그냥 return
+                locationResult ?: return
+                for(updatedLocation in locationResult.locations) {
+                    currentLocation = LatLng(updatedLocation.latitude, updatedLocation.longitude)
+                }
+            }
+        }
+    }
+
     override fun onMapReady(naverMap: NaverMap) {
 //    locationOverlay: 현재 위치를 나타내는 Overlay
         val locationOverlay = naverMap.locationOverlay
-//        val marker = Marker()
         val uiSettings = naverMap.uiSettings
+        val marker = Marker()
+        val cameraUpdate = CameraUpdate.scrollTo(currentLocation)
+        marker.position = currentLocation
+        marker.map = naverMap
+
         naverMap.locationSource = locationSource
         naverMap.addOnLocationChangeListener { location ->
             Toast.makeText(this, "${location.latitude}, ${location.longitude}", Toast.LENGTH_SHORT).show()
         }
 
-//        marker.position = LatLng(currentLatitude, currentLongtitude)
-//        marker.map = naverMap
-
 
 //    지도 객체에 종속된 객체로, 지도에 단 하나만 존재함.
 //    보여주고 숨기는 것은 오로지 isVisible 로만 가능.
         locationOverlay.isVisible = true
-        locationOverlay.position = LatLng(currentLatitude, currentLongtitude)
-
-        var cameraUpdate = CameraUpdate.scrollTo(LatLng(currentLatitude, currentLongtitude)).animate(CameraAnimation.Linear)
-        naverMap.moveCamera(cameraUpdate)
-
+        locationOverlay.position = currentLocation
         naverMap.setLocationSource(object : LocationSource {
 //            LocationSource의 메소드는
 //            NaverMap 객체가 알아서 호출하므로 개발자의 수동호출을 금함.
@@ -68,15 +90,12 @@ class EndActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Con
             override fun activate(p0: LocationSource.OnLocationChangedListener) {
             }
         })
-
-    uiSettings.isLocationButtonEnabled = true
 //    현재 위치 추적모드 ON
-//        naverMap.locationTrackingMode = LocationTrackingMode.Follow
+        naverMap.locationTrackingMode = LocationTrackingMode.Follow
+//        아..현자 씨게오네 아 ㄹㅇ루다가 ㅋㅋㅋㅋㅋㅋㅋ
+        naverMap.moveCamera(cameraUpdate)
     }
 
-
-
-// Full Screen 지원을 위한 쓰레드
     private val mHideHandler = Handler()
     private val mHidePart2Runnable = Runnable {
         // Delayed removal of status and navigation bar
@@ -116,13 +135,38 @@ class EndActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Con
 
         mVisible = true
         userInfoInit()
-
+        startLocationUpdate()
+        getUserLocation()
         mapInit()
 
         // Set up the user interaction to manually show or hide the system UI.
         user_name_text.setOnClickListener { toggle() }
         user_email_text.setOnClickListener { toggle() }
 
+//        https://docs.ncloud.com/ko/naveropenapi_v3/maps/url-scheme/url-scheme.html
+//        URL Scheme 처리 (버튼 텍스트로 네이버지도 자동검색)
+        search_button.setOnClickListener {
+
+            val buttonText = search_button.text.toString()
+            val url = "nmap://search?query=$buttonText&appname=com.example.gocafein"
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            intent.addCategory(Intent.CATEGORY_BROWSABLE)
+
+            val list =
+                packageManager.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY)
+//            지도 Application이 아무것도 없을 경우  Playstore로 이동.
+            if (list == null || list.isEmpty()) {
+//                Context 무엇으로 할지?
+                startActivity(
+                    Intent(
+                        Intent.ACTION_VIEW,
+                        Uri.parse("market://details?id=com.nhn.android.nmap")
+                    )
+                )
+            } else {
+                startActivity(intent)
+            }
+        }
         // Upon interacting with UI controls, delay any scheduled hide()
         // operations to prevent the jarring behavior of controls going away
         // while interacting with the UI.
@@ -198,12 +242,12 @@ class EndActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Con
         private val UI_ANIMATION_DELAY = 300
     }
 
-    fun userInfoInit() {
+    private fun userInfoInit() {
         user_name_text.text = intent.getStringExtra("userName")
         user_email_text.text = intent.getStringExtra("userEmail")
     }
 
-    fun mapInit() {
+    private fun mapInit() {
         val mapFragment = supportFragmentManager.findFragmentById(R.id.naver_map_fragment) as MapFragment
         if (mapFragment == null) {
             val mapFragment = MapFragment.newInstance()
@@ -213,7 +257,7 @@ class EndActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Con
 
 
         //    Permission 처리를 위해 별도 프래그먼트 권한 요청 생성
-        locationSource = FusedLocationSource(mapFragment, LOCATION_PERMISSION_REQUEST_CODE)
+        locationSource = FusedLocationSource(this, LOCATION_PERMISSION_REQUEST_CODE)
 
 
 
@@ -227,51 +271,11 @@ class EndActivity : AppCompatActivity(), OnMapReadyCallback, GoogleApiClient.Con
         if (locationSource.onRequestPermissionsResult(requestCode, permissions, grantResults)) {
             //        권한이 거부될 경우 return
             if (!locationSource.isActivated) Toast.makeText(this, "거부됨", Toast.LENGTH_SHORT).show()
-            else Toast.makeText(this, "좋아요!", Toast.LENGTH_SHORT).show()
+            else Toast.makeText(this, "조아요!", Toast.LENGTH_SHORT).show()
             return
         }
-        Toast.makeText(this, "좋아요!", Toast.LENGTH_SHORT).show()
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 
-
-    val locationListener = object : LocationCallback() {
-        override fun onLocationResult(locationResult: LocationResult?) {
-            locationResult?.let {
-                currentLatitude = it.lastLocation.latitude
-                currentLongtitude = it.lastLocation.longitude
-                Log.i("location", "current Location : $currentLatitude, $currentLongtitude")
-            }
-        }
-
-//        override fun onLocationAvailability(p0: LocationAvailability?) {
-//            super.onLocationAvailability(p0)
-//        }
-    }
-
-//    위치 정보 제공자가 사용 가능상태가 되면 호출
-    override fun onConnected(p0: Bundle?) {
-        providerClient.lastLocation.addOnSuccessListener {
-            it?.let{
-                currentLatitude = it.latitude
-                currentLongtitude = it.longitude
-                Log.i("location", "current Location : $currentLatitude, $currentLongtitude")
-            }
-        }
-
-        val locationRequest = LocationRequest.create()
-        locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-        locationRequest.interval = 3000 //3초
-        providerClient.requestLocationUpdates(locationRequest, locationListener, null)
-    }
-// 위치 사용 불가능 상태가 되면 호출
-    override fun onConnectionSuspended(p0: Int) {
-
-    }
-
-//    위치 정보 제공자를 얻지 못했을 때 호출
-    override fun onConnectionFailed(p0: ConnectionResult) {
-        Log.i("Connection", "Can't get the location provider")
-    }
 
 }

@@ -5,13 +5,13 @@
     <string name="dummy_button">Additional Button</string>
     <string name="dummy_content">DUMMY\nCONTENT</string>
 
-<!--    Naver Login API account Information-->
+    <!--    Naver Login API account Information-->
     <string name="login_api_client_id">C2nhanNzO1ieOfs5K3jB</string>
     <string name="login_api_client_secret">W4ImEbUUR6</string>
     <string name="login_api_client_name">GoCafein</string>
 
 
-<!--    Naver Cloud Platform (Naver Map) account Information-->
+    <!--    Naver Cloud Platform (Naver Map) account Information-->
     <string name="map_api_client_id">5f0p60lwsd</string>
 
 

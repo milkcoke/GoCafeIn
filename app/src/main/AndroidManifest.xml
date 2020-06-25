@@ -1,13 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.gocafein">
-<!--    유저의 현재 위치 권한얻기 -->
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <!-- 유저의 현재 위치 권한얻기 -->
+    <!-- min sdk 26이상 Android Oreo -->
+    <!--
+    23이상에서만 실행될 앱은 uses-permission-sdk-23을 지정하여
+        앱 실행 도중에 필요한 부분에서만 권한 요청을 진행할 수 있게 설정하는 것이 적절하다.
+    -->
+    <uses-permission-sdk-23 android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission-sdk-23 android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/gocafein_app_logo2"
+        android:icon="@mipmap/gocafein_app_logo"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
@@ -15,14 +20,14 @@
 
         <meta-data
             android:name="com.naver.maps.map.CLIENT_ID"
-            android:value="@string/map_api_client_id"/>
+            android:value="@string/map_api_client_id" />
 
         <activity
             android:name=".EndActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
             android:label="@string/title_activity_end"
             android:theme="@style/FullscreenTheme" />
-        <activity android:name=".MainActivity">
+        <activity android:name=".LoginActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

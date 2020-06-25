@@ -21,17 +21,40 @@
         android:textSize="25sp"
         android:textStyle="bold" />
 
-    <TextView
-        android:id="@+id/user_email_text"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:keepScreenOn="true"
-        android:layout_gravity="top|center_horizontal"
-        android:layout_marginTop="100dp"
-        android:text="null"
-        android:textColor="@color/colorPrimaryDark"
-        android:textSize="25sp"
-        android:textStyle="bold" />
+        android:layout_marginHorizontal="15dp"
+        android:layout_marginTop="100dp">
+
+        <TextView
+            android:id="@+id/current_address_introduction"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="현재위치: " />
+
+        <!--        좌표주소 -> 국내 행정 주소로 변환하는
+            Reverse Geocoding API 사용 (마찬가지로 Naver API)-->
+        <TextView
+            android:id="@+id/current_address_textView"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:text="null" />
+
+    </LinearLayout>
+
+
+<!--    <TextView-->
+<!--        android:id="@+id/user_email_text"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:keepScreenOn="true"-->
+<!--        android:layout_gravity="top|center_horizontal"-->
+<!--        android:layout_marginTop="100dp"-->
+<!--        android:text="null"-->
+<!--        android:textColor="@color/colorPrimaryDark"-->
+<!--        android:textSize="25sp"-->
+<!--        android:textStyle="bold" />-->
 
 <!--    (Naver)Mapfragment or MapView: 기본 View만 가짐.-->
 <!--    지도를 다루는 Interface 요소는 NaverMap Class가 담당-->
@@ -80,6 +103,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/dummy_button" />
+
 
         </LinearLayout>
     </FrameLayout>

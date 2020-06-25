@@ -12,7 +12,8 @@
 
 
     <!--    Naver Cloud Platform (Naver Map) account Information-->
-    <string name="map_api_client_id">5f0p60lwsd</string>
+    <string name="naver_platform_api_client_id">5f0p60lwsd</string>
+    <string name="naver_platform_api_client_secret">L4IUCduZh4cjcqrFGxkcJCd8uZD5LHZejbdJDC5H</string>
 
 
     <string name="title_activity_fullscreen">FullscreenActivity</string>

@@ -47,7 +47,7 @@ class LoginActivity : AppCompatActivity(), LocationPermissionDialogActivity.Noti
         //        삭제를 위해서는 OAuthLogin.logout() or OAuthLogin.logoutAndDeleteToken() 호출 필요
         //        clientId: API 사용 허가 절차상 app을 등록하고 Naver Develper 사이트로부터 부여받은 id
         //        clientName: 네이버 로그인시 앱의 로그인 화면에 표시할 앱 이름.
-        //        Mobile web의 로그인 화셤ㄴ시 서버에 저장된 앱의 이름이 표시됨.
+        //        Mobile web의 로그인시 EndActivity 화면에서 서버에 저장된 앱의 이름이 표시됨.
         mOAuthLoginModule.init(
                 this
                 ,getString(R.string.login_api_client_id)

@@ -157,7 +157,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 //                    UTF-8 Encoding space character == %20
                     "?query=$currentlocationDistrict%20카페" +
 //                    display: 검색 결과 출력 건수
-                    "&display=15" +
+                    "&display=20" +
 //                    start: 검색 시작 위치 (MAX: 1000)
                     "&start=1" +
 //                    random sort : 유사도순
@@ -319,7 +319,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         }
     }
 
-    fun katechToGEO(mapX : Double, mapY : Double) : LatLng {
+    private fun katechToGEO(mapX : Double, mapY : Double) : LatLng {
 // mapX, mapY좌표는 카텍 좌표계 (TM128)
 //           구글맵의 위도/경도를 사용하는 WGS84로 좌표 변경이 필요.
 //            천호 977 카페의 mapx , mapy 대입 테스트

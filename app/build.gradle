@@ -35,7 +35,7 @@ dependencies {
 //     AAR 파일은 Android 앱 모듈의 종속성으로 사용할 수 있는 Android 보관 파일입니다.
 //     Android 리소스 및 manifest 파일이 포함될 수 있습니다.
     implementation files('libs/naveridlogin_android_sdk_4.2.6.aar')
-
+    implementation files('libs/poi-4.1.2.jar')
 //    naver map SDK latest version : 3.8.0
     implementation("com.naver.maps:map-sdk:3.8.0")
 //    Google Play Service : FusedLocationProviderClient, FusedLcationSource 적용

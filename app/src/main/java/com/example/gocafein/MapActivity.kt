@@ -161,6 +161,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
         userInfoInit()
         mapInit()
+        fileInit()
         // Set up the user interaction to manually show or hide the system UI.
         user_name_text.setOnClickListener {
 
@@ -232,11 +233,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
                 startActivity(intent)
             }
         }
-
-
-
-
-
 
     }
 
@@ -452,9 +448,28 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 
         //    Permission 처리를 위해 별도 프래그먼트 권한 요청 생성
         locationSource = FusedLocationSource(this, LOCATION_PERMISSION_REQUEST_CODE)
+    }
 
+    private fun fileInit() {
+        Thread(Runnable {
+            val excelFile = File(this@MapActivity.filesDir.toString()).resolve(FileIO.FILE_NAME)
+//            이 앱에 지정된 내부 저장소의 data directory를 반환하는 메소드 filesDir
+            Log.i("file", this@MapActivity.filesDir.toString())
+            Log.i("target_file", excelFile.toString())
+//            이미 앱을 실행한 적이 있는경우
+            if(excelFile.exists()){
+//                내부 저장소에 생성된 바 있는 excel 파일로부터 읽어들임.
+                Log.i("file", "여기 실행됨!")
+                FileIO.fileRead(excelFile)
+            } else {
+//                앱을 처음실행하여 내부저장소에 파일이 없는경우
+//                R.raw.Resource seoul_noisy_2019_4.xls 파일을 내부 저장소로 복사
+                FileIO.fileCopy(excelFile, resources.openRawResource(R.raw.seoul_noisy_2019_4))
+            }
 
+        }).start()
 
+//        FileIO.fileRead(File(this@MapActivity.filesDir.toString()).resolve(FileIO.FILE_NAME))
     }
 
     override fun onRequestPermissionsResult(

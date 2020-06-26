@@ -22,6 +22,10 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 
 }
 
@@ -35,7 +39,8 @@ dependencies {
 //     AAR 파일은 Android 앱 모듈의 종속성으로 사용할 수 있는 Android 보관 파일입니다.
 //     Android 리소스 및 manifest 파일이 포함될 수 있습니다.
     implementation files('libs/naveridlogin_android_sdk_4.2.6.aar')
-    implementation files('libs/poi-4.1.2.jar')
+
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
 //    naver map SDK latest version : 3.8.0
     implementation("com.naver.maps:map-sdk:3.8.0")
 //    Google Play Service : FusedLocationProviderClient, FusedLcationSource 적용
@@ -45,8 +50,9 @@ dependencies {
 
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
 
-//    JSON Parser jsoup Library
+//    html, xml Parser jsoup Library
     implementation 'org.jsoup:jsoup:1.13.1'
+    implementation 'javax.xml.stream:stax-api:1.0'
 
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'

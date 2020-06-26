@@ -423,8 +423,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         })
 //    현재 위치 추적모드 ON
         naverMap.locationTrackingMode = LocationTrackingMode.Follow
-//        아..현자 씨게오네 아 ㄹㅇ루다가 ㅋㅋㅋㅋㅋㅋㅋ
-
 
     }
 

@@ -1,12 +1,12 @@
 package com.example.gocafein
 
-import android.util.Log
-import org.apache.poi.hssf.usermodel.HSSFWorkbookFactory
-import org.apache.poi.ss.usermodel.WorkbookFactory
-import java.io.*
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.InputStream
 
 object FileIO {
-    val FILE_NAME = "seoul_noisy_2019_4.xls"
+    val FILE_NAME = "seoul_noisy_2019_4.xlsx"
 
 
 //    raw resource  파일을 Internal Storage로 옭김
@@ -28,11 +28,12 @@ object FileIO {
 
 //        val fileReader = FileReader(targetFile)
 //        일단 메뉴얼대로
-        val workBook = HSSFWorkbookFactory.create(FileInputStream(targetFile))
-        val rowNumber = 0
-        val columnNumber = 0
-        val sheet = workBook.getSheetAt(0)
-        Log.i("excel", "${sheet.getRow(rowNumber).getCell(columnNumber)}")
+//        실패//
+//        val workBook = XSSFWorkbookFactory.create(FileInputStream(targetFile))
+//        val rowNumber = 0
+//        val columnNumber = 0
+//        val sheet = workBook.getSheetAt(0)
+//        Log.i("excel", "${sheet.getRow(rowNumber).getCell(columnNumber)}")
 //        val bufferReader = BufferedReader(fileReader)
 
 //        try {

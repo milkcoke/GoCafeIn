@@ -24,7 +24,7 @@ class LocationPermissionDialogActivity : DialogFragment() {
 //.setView(inflater.inflate(R.layout.activity_location_permission_dialog, null))
         builder
             .setTitle("Go CafeIn")
-            .setIcon(R.drawable.gocafein_app_logo)
+            .setIcon(R.mipmap.gocafein_app_logo2)
             .setMessage("카페를 찾기위해 위치 권한이 필요해요!")
             .setNeutralButton("확인", DialogInterface.OnClickListener { dialog, which ->
                 noticeDialogListener.onDialogConfirmButtonClick()

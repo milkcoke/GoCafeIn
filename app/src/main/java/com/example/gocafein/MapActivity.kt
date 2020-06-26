@@ -43,6 +43,8 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 //    도로명 주소중 '동/읍'만 keep해둘 필요가있음.
     lateinit var currentlocationDistrict : String
 
+    var nearCafeArray = ArrayList<Cafe>()
+
 
     private inner class RequestSearchTask(context: MapActivity) : AsyncTask<URL?, Unit, String>() {
         //        Background memory 누수를 막기위해 (Garbage Collector 대상 Reference 유지를 위한 레퍼런스)
@@ -81,6 +83,11 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         override fun onPostExecute(content: String) {
 
             val activity = activityReference.get()
+            val resultLocation = parsingNearCafeInfoJSON(content)
+//            currentMarker.position = resultLocation
+//            val cameraUpdate = CameraUpdate.scrollTo(resultLocation)
+//            currentNaverMap.moveCamera(cameraUpdate)
+
             Log.i("search", content)
         }
 
@@ -290,26 +297,43 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         return resultAddress
     }
 
-    fun parsingNearCafeInfoJSON (content: String) : String {
-        var resultAddress = ""
+
+    fun parsingNearCafeInfoJSON (content: String) : Unit {
+
         try {
             val json = JSONObject(content)
             val cafeListArray = json.getJSONArray("items")
-            var tempMapList =  ArrayList<Map<String, String>>()
-            for (i in 0..cafeListArray.length()) {
-//                var cafeInfo = cafeListArray.getJSONObject(i)
-//                tempMapList.add(Map(cafeInfo.getString("title")))
+//            var tempMapList =  ArrayList<Map<String, String>>()
+            for (i in 0 until cafeListArray.length()) {
+                val cafeInfo = cafeListArray.getJSONObject(i)
+                val cafeLocation = katechToGEO(cafeInfo.getString("mapx").toDouble(), cafeInfo.getString("mapy").toDouble())
+                nearCafeArray.add(Cafe(cafeInfo.getString("title"), cafeInfo.getString("link"), cafeInfo.getString("roadAddress"), cafeLocation))
+            }
+
+
+        } catch (jsonExc: JSONException) {
+            jsonExc.printStackTrace()
         }
-
-//                    title, mapx, mapy 를 추출하자.
-
-//            val city = cafeListArray.getJSONObject("area1").getString("name")
-//            val county = cafeListArray.getJSONObject("area2").getString("name")
-//            val district = cafeListArray.getJSONObject("area3").getString("name")
-
-        } catch (e: IOException) {
-
+        for(i in nearCafeArray) {
+            Log.i("cafe", i.name)
         }
+    }
+
+    fun katechToGEO(mapX : Double, mapY : Double) : LatLng {
+// mapX, mapY좌표는 카텍 좌표계 (TM128)
+//           구글맵의 위도/경도를 사용하는 WGS84로 좌표 변경이 필요.
+//            천호 977 카페의 mapx , mapy 대입 테스트
+        val naverKatechLocationPoint = GeoTransPoint(322546.toDouble(), 548996.toDouble())
+        val transLocation = TransLocation()
+        val geoTranslatedPosition: GeoTransPoint = transLocation.convert(transLocation.KATEC, transLocation.GEO, naverKatechLocationPoint)
+
+        val latitude : Double = geoTranslatedPosition.y
+        val longitude : Double = geoTranslatedPosition.x
+
+//            resultAddress = "${wgs84Point.x * 10} , ${wgs84Point.y * 100}"
+        val resultLatLng = LatLng(latitude, longitude)
+        Log.i("Location", "$resultLatLng")
+        return resultLatLng
     }
 
 //    API Level 10 이상에서는 Background Location Update X

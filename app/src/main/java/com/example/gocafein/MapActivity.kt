@@ -3,6 +3,7 @@ package com.example.gocafein
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.net.Uri
 import android.os.AsyncTask
 import android.os.Bundle
@@ -16,6 +17,7 @@ import com.naver.maps.map.*
 import com.naver.maps.map.overlay.LocationOverlay
 import com.naver.maps.map.overlay.Marker
 import com.naver.maps.map.overlay.Overlay
+import com.naver.maps.map.overlay.OverlayImage
 import com.naver.maps.map.util.FusedLocationSource
 import kotlinx.android.synthetic.main.activity_end.*
 import org.json.JSONException
@@ -42,7 +44,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
     lateinit var locationOverlay : Overlay
 //    도로명 주소중 '동/읍'만 keep해둘 필요가있음.
     lateinit var currentlocationDistrict : String
-
+    lateinit var nearCafeMarkerArray : Array<Marker>
     var nearCafeArray = ArrayList<Cafe>()
 
 
@@ -83,12 +85,27 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         override fun onPostExecute(content: String) {
 
             val activity = activityReference.get()
-            val resultLocation = parsingNearCafeInfoJSON(content)
+            parsingNearCafeInfoJSON(content)
 //            currentMarker.position = resultLocation
 //            val cameraUpdate = CameraUpdate.scrollTo(resultLocation)
 //            currentNaverMap.moveCamera(cameraUpdate)
 
-            Log.i("search", content)
+
+            //            기본 생성자로 마커 탐색된 카페 갯수만큼 생성
+            nearCafeMarkerArray = Array(nearCafeArray.size) { i-> Marker() }
+            Log.i("search", "nearCafeSize : ${nearCafeMarkerArray.size}")
+            for (index in nearCafeArray.indices) {
+//                마커의 포지션을 검색된 카페의 위치로
+                nearCafeMarkerArray[index].apply {
+                    position = nearCafeArray[index].location
+                    map = currentNaverMap
+                    icon = OverlayImage.fromResource(R.drawable.cafe_marker_icon_blue)
+                }
+            }
+            for (cafe in nearCafeArray) {
+                Log.i("cafeSearch", cafe.location.toString())
+            }
+
         }
 
     }
@@ -303,10 +320,11 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         try {
             val json = JSONObject(content)
             val cafeListArray = json.getJSONArray("items")
-//            var tempMapList =  ArrayList<Map<String, String>>()
+
             for (i in 0 until cafeListArray.length()) {
-                val cafeInfo = cafeListArray.getJSONObject(i)
-                val cafeLocation = katechToGEO(cafeInfo.getString("mapx").toDouble(), cafeInfo.getString("mapy").toDouble())
+                var cafeInfo = cafeListArray.getJSONObject(i)
+                var cafeLocation = katechToGEO(cafeInfo.getString("mapx").toDouble(), cafeInfo.getString("mapy").toDouble())
+
                 nearCafeArray.add(Cafe(cafeInfo.getString("title"), cafeInfo.getString("link"), cafeInfo.getString("roadAddress"), cafeLocation))
             }
 
@@ -315,7 +333,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
             jsonExc.printStackTrace()
         }
         for(i in nearCafeArray) {
-            Log.i("cafe", i.name)
+            Log.i("cafeLocation", i.location.toString())
         }
     }
 
@@ -323,7 +341,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
 // mapX, mapY좌표는 카텍 좌표계 (TM128)
 //           구글맵의 위도/경도를 사용하는 WGS84로 좌표 변경이 필요.
 //            천호 977 카페의 mapx , mapy 대입 테스트
-        val naverKatechLocationPoint = GeoTransPoint(322546.toDouble(), 548996.toDouble())
+        val naverKatechLocationPoint = GeoTransPoint(mapX, mapY)
         val transLocation = TransLocation()
         val geoTranslatedPosition: GeoTransPoint = transLocation.convert(transLocation.KATEC, transLocation.GEO, naverKatechLocationPoint)
 
@@ -336,6 +354,11 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         return resultLatLng
     }
 
+    fun markerInitialize() {
+        for (marker in nearCafeMarkerArray) {
+            marker.map = null
+        }
+    }
 //    API Level 10 이상에서는 Background Location Update X
 //    allow update location while using this app
 //    실시간 위치 업데이트 구현 (굳이 이앱에서 사용할 일은 없을듯?)

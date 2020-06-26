@@ -6,4 +6,5 @@ import com.naver.maps.geometry.LatLng
 //별도 화면에서 RecyclerView같은 형태로 표현하면 되지않을까? (이미지..?)
 
 data class Cafe (val name: String,val snsLink: String, val roadAddress: String, var location: LatLng){
+
 }

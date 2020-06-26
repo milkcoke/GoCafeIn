@@ -3,7 +3,6 @@ package com.example.gocafein
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Color
 import android.net.Uri
 import android.os.AsyncTask
 import android.os.Bundle
@@ -11,13 +10,11 @@ import android.os.Looper
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import com.google.android.gms.location.*
 import com.naver.maps.geometry.LatLng
 import com.naver.maps.map.*
-import com.naver.maps.map.overlay.LocationOverlay
-import com.naver.maps.map.overlay.Marker
-import com.naver.maps.map.overlay.Overlay
-import com.naver.maps.map.overlay.OverlayImage
+import com.naver.maps.map.overlay.*
 import com.naver.maps.map.util.FusedLocationSource
 import kotlinx.android.synthetic.main.activity_end.*
 import org.json.JSONException
@@ -100,6 +97,9 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
                     position = nearCafeArray[index].location
                     map = currentNaverMap
                     icon = OverlayImage.fromResource(R.drawable.cafe_marker_icon_blue)
+                    captionText = nearCafeArray[index].name
+                    setCaptionAligns(Align.Top)
+                    captionColor = ContextCompat.getColor(this@MapActivity, R.color.color_zero_pay_blue)
                 }
             }
             for (cafe in nearCafeArray) {
@@ -324,17 +324,19 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
             for (i in 0 until cafeListArray.length()) {
                 var cafeInfo = cafeListArray.getJSONObject(i)
                 var cafeLocation = katechToGEO(cafeInfo.getString("mapx").toDouble(), cafeInfo.getString("mapy").toDouble())
-
-                nearCafeArray.add(Cafe(cafeInfo.getString("title"), cafeInfo.getString("link"), cafeInfo.getString("roadAddress"), cafeLocation))
+                var storeNameString = cafeInfo.getString("title")
+//                json response 결과에 간혹 tag <b>이 들어가있는 경우 처리
+                if(storeNameString.contains("<b>")) {
+                    storeNameString = storeNameString.replace("<b>","").replace("</b>","\n")
+                }
+                nearCafeArray.add(Cafe(storeNameString, cafeInfo.getString("link"), cafeInfo.getString("roadAddress"), cafeLocation))
             }
 
 
         } catch (jsonExc: JSONException) {
             jsonExc.printStackTrace()
         }
-        for(i in nearCafeArray) {
-            Log.i("cafeLocation", i.location.toString())
-        }
+
     }
 
     private fun katechToGEO(mapX : Double, mapY : Double) : LatLng {
@@ -396,6 +398,9 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         locationOverlay = naverMap.locationOverlay
         currentMarker = Marker()
         val uiSettings = naverMap.uiSettings
+
+//        현재 위치로 돌아가는 버튼 활성화
+        uiSettings.isLocationButtonEnabled = true
 
 //        Map이 준비된 후에 마지막 (최근) 사용자 위치를 받아옴
         getUserLocation()
